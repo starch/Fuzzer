@@ -1,0 +1,8 @@
+{
+	"build_systems":
+  [{
+    "name": "Run with args",
+    "cmd": ["python", "$file", "discover", "http://www.yahoo.com"]
+  }]
+
+}
