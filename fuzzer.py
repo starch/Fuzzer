@@ -1,6 +1,7 @@
 import sys
 import urllib2
 import requests
+from requests.exceptions import ConnectionError, MissingSchema
 
 def main():
 	print('Fuzzer has started!')
@@ -10,18 +11,20 @@ def main():
 	sensitive = []
 	random = 0
 	slow = 500
-	print(sys.argv.__len__())
-	if sys.argv.__len__() >= 1 and sys.argv.__len__() <= 5:
+
+	if sys.argv.__len__() > 2 and sys.argv.__len__() <= 5:
 		if sys.argv[1].lower() == 'discover':
 			mode = 'discover'
 		elif sys.argv[1].lower() == 'test':
 			mode = 'test'
 
 		domain = sys.argv[2].lower()
-		r = requests.get(domain)
 
-		if r.status_code == 200:
-			print(domain + ' is a valid URL')
+		try:
+			r = requests.get(domain, timeout=3)
+
+			if r.status_code == 200:
+				print(domain + ' is a valid URL')
 
 			if mode == 'discover':
 				#Call discover function here
@@ -29,9 +32,13 @@ def main():
 			elif mode == 'test':
 				#Call test function here
 				pass
-		else:
-			print(domain + ' is not a valid URL')
-			pass
+		except ConnectionError as e:    
+   			print(domain + ' is not responding')
+   		except MissingSchema as m:
+   			print(domain + ' is not a valid URL')
+
+	else:
+		print('Please enter a fuzzer mode followed by a domain')
 
 def discoverHelper():
 
@@ -44,9 +51,10 @@ def discoverHelper():
 			for line in wordFile:
 				commonWords.append(line)
 			wordFile.close()
+
 		if '--custom-auth=' in sys.argv[x]:
 			authString = sys.argv[x][14:]
-			authString.split(',')
+			authString = authString.split(',')
 			authUser = authString[0]
 			authPass = authString[1]
 

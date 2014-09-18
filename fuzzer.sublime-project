@@ -2,7 +2,7 @@
 	"build_systems":
   [{
     "name": "Run with args",
-    "cmd": ["python", "$file", "discover", "http://www.yahoo.com"]
+    "cmd": ["python", "$file", "discover", "http://www.yahoo.com", "--common-words=words.txt", "--custom-auth=username,password"]
   }]
 
 }
