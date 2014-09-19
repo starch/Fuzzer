@@ -52,10 +52,50 @@ def discoverHelper():
 				commonWords.append(line)
 			wordFile.close()
 
+			for word in commonWords:
+				if domain[-1] == '/':
+
+					urlGuess = domain + word
+
+					try:
+						r = requests.get(urlGuess, timeout=3)
+
+						if r.status_code == 200:
+							#Add to link array
+							pass
+					except ConnectionError as e:    
+						pass
+			   		except MissingSchema as m:
+			   			pass
+			   	else:
+
+			   		urlGuess = domain + '/' + word
+			   		
+			   		try:
+						
+						r = requests.get(urlGuess, timeout=3)
+
+						if r.status_code == 200:
+							#Add to link array
+							pass
+					except ConnectionError as e:    
+						pass
+			   		except MissingSchema as m:
+			   			pass
+
 		if '--custom-auth=' in sys.argv[x]:
 			authString = sys.argv[x][14:]
 			authString = authString.split(',')
 			authUser = authString[0]
 			authPass = authString[1]
+
+def cookieFinder(url):
+	req = requests.get(url)
+	cookies = req.cookies
+	if cookies.__len__ < 1:
+		print('No cookies')
+	else:
+		for c in cookies:
+			print(c + '\n')
 
 main()
