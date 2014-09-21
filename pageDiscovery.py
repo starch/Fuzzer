@@ -1,33 +1,25 @@
-import requests
-import urllib.request
 from html.parser import HTMLParser
 import requests
 
 
 possibleWebsites = []
-test = []
-class LinkParser(HTMLParser):
+vistedWebsites = []
+class HParser(HTMLParser):
 	def handle_starttag(self, tag, attrs):
-		if tag == 'a' and len(attrs) > 0 and attrs[0] not in possibleWebsites:
+		if tag == 'a' and len(attrs) > 0 and attrs[0] not in vistedWebsites:
 			attrs = attrs[0]
-			test.append(attrs)
 			for element in attrs:
 				if element.lower() == 'href':
 					possibleWebsites.append(attrs)
+					vistedWebsites.append(attrs)
 					break
-		
 
-def getHtml(url):
-	req = urllib.request.Request(url)
-	response = urllib.request.urlopen(req)
-	the_page = response.read()
-	return the_page.decode()
-
-def testAddress(domain, currentAddress, possibleAddress):
+def generateAddress(domain, currentAddress, possibleAddress):
 	if(possibleAddress[1][0] == "/"):
-		newaddress = domain + possibleAddress[1]
+		return domain + possibleAddress[1]
 	elif(possibleAddress[1][0:4].lower() == 'http'):
-		newaddress = possibleAddress[1]
+		if domain in possibleAddress[1]:
+			return possibleAddress[1]
 	else:
 		index = 0;
 		i = 0;
@@ -35,23 +27,39 @@ def testAddress(domain, currentAddress, possibleAddress):
 			if currentAddress[i] == "/":
 				index = i
 				i = i + 1
-				print("s")
-		newaddress = currentAddress[0:index] + possibleAddress[1]
+		return currentAddress[0:index] + possibleAddress[1]
+def testAddress(newaddress):
 	try:
 		r = requests.get(newaddress, timeout=10)
 		return r.status_code
-	except ConnectionError as e:    
-			print(domain + ' is not responding')
-	except MissingSchema as m:
-			print(domain + ' is not a valid URL')
+	except:    
+			pass
 	return -1;
 
-address = "http://www.greenberg.com"
-parser = LinkParser()
-html = getHtml(address)
-parser.feed(html)
-print((possibleWebsites))
-for websites in possibleWebsites:
-	print(websites)
-	print(testAddress(address, address, websites))
-print("Stop")
+def discoverWebpages(domain, url):
+	global possibleWebsites
+	r = requests.get(url)
+	parser = HParser()
+	html = r.text
+	parser.feed(html)
+	validWebsites = []
+	for websites in possibleWebsites:
+		address = generateAddress(domain, url, websites)
+		code = testAddress(address)
+		if code == 200:
+			validWebsites.append(address)
+	possibleWebsites = []
+	return validWebsites
+
+def allValidWebPages(domain, url):
+	valid = discoverWebpages(domain, url)
+	result = valid
+	while (len(valid) > 0):
+		elements = discoverWebpages(domain,valid[0])
+		valid += elements
+		valid = valid [1:]
+		result += elements
+	return result
+
+
+print(allValidWebPages("http://www.greenberg.com","http://www.greenberg.com"))
