@@ -39,7 +39,7 @@ def main():
 				print(domain + ' is a valid URL')
 				print('')
 				s = requests.Session()
-				fuzzerSession = s.get(domain)
+				fuzzerSession.get(domain)
 
 			if mode == 'discover':
 				#Call discover function here
