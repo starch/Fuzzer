@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from requests.exceptions import ConnectionError, MissingSchema, ReadTimeout
 
 #DATA STRUCTURES
-fuzzerSession = ''
+fuzzerSession = requests.Session()
 queryStrings = []
 links = []
 
@@ -37,6 +37,7 @@ def main():
 
 			if r.status_code == 200:
 				print(domain + ' is a valid URL')
+				print('')
 				s = requests.Session()
 				fuzzerSession = s.get(domain)
 
@@ -76,9 +77,8 @@ def discoverHelper():
 			authString = authString.split(',')
 			authUser = authString[0]
 			authPass = authString[1]
-			s = requests.Session()
-			s.auth = (authUser, authPass)
-			fuzzerSession = s.get(domain)
+			fuzzerSession.auth = (authUser, authPass)
+			fuzzerSession.get(domain)
 
 	guessPages()
 
@@ -88,6 +88,9 @@ def discoverHelper():
 		parseUrlForInput(link)
 
 	for query in queryStrings:
+		print('Printing Input ID\'s...')
+		print('Input ID')
+		print('=========')
 		print(query)
 
 
@@ -96,8 +99,12 @@ def cookieFinder(sess):
 	if cookies.__len__() < 1:
 		print('No cookies')
 	else:
+		print('Printing cookies...')
+		print('Cookie Name \t Cookie Value')
+		print('=============================')
 		for c in cookies:
-			print(c)
+			print(c.name + '\t\t\t\t' + c.value)
+	print('')
 
 def parseUrlForInput(url):
 	result = urlparse(url)
