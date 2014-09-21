@@ -1,13 +1,16 @@
 import requests
 import urllib.request
 from html.parser import HTMLParser
+import requests
 
 
 possibleWebsites = []
+test = []
 class LinkParser(HTMLParser):
 	def handle_starttag(self, tag, attrs):
-		if len(attrs) > 0 and attrs[0] not in possibleWebsites:
+		if tag == 'a' and len(attrs) > 0 and attrs[0] not in possibleWebsites:
 			attrs = attrs[0]
+			test.append(attrs)
 			for element in attrs:
 				if element.lower() == 'href':
 					possibleWebsites.append(attrs)
@@ -21,25 +24,34 @@ def getHtml(url):
 	return the_page.decode()
 
 def testAddress(domain, currentAddress, possibleAddress):
-	i = 0
-	validAddress = []
-	if(possibleWebsites[i][1][0] == "/"):
+	if(possibleAddress[1][0] == "/"):
+		newaddress = domain + possibleAddress[1]
+	elif(possibleAddress[1][0:4].lower() == 'http'):
+		newaddress = possibleAddress[1]
+	else:
 		index = 0;
 		i = 0;
-		while(i > len(currentAddress)):
+		while(i < len(currentAddress)):
 			if currentAddress[i] == "/":
 				index = i
 				i = i + 1
+				print("s")
+		newaddress = currentAddress[0:index] + possibleAddress[1]
+	try:
+		r = requests.get(newaddress, timeout=10)
+		return r.status_code
+	except ConnectionError as e:    
+			print(domain + ' is not responding')
+	except MissingSchema as m:
+			print(domain + ' is not a valid URL')
+	return -1;
 
-
+address = "http://www.greenberg.com"
 parser = LinkParser()
-html = getHtml('http://www.w3schools.com/tags/tag_figcaption.asp')
+html = getHtml(address)
 parser.feed(html)
-"""for array in possibleWebsites:
-	for touple in array:
-		for element in touple:
-			if element == 'href':
-				print("true")"""
-#print(possibleWebsites)
+print((possibleWebsites))
 for websites in possibleWebsites:
 	print(websites)
+	print(testAddress(address, address, websites))
+print("Stop")
