@@ -1,7 +1,7 @@
 import sys
-import urllib2
 import requests
-from urlparse import urlparse
+import pageDiscovery
+from urllib.parse import urlparse
 from requests.exceptions import ConnectionError, MissingSchema, ReadTimeout
 
 #DATA STRUCTURES
@@ -47,11 +47,11 @@ def main():
 				#Call test function here
 				pass
 		except ConnectionError as e:    
-   			print(domain + ' is not responding')
-   		except MissingSchema as m:
-   			print(domain + ' is not a valid URL')
-   		except ReadTimeout as t:
-   			print('Request to ' + domain + ' timed out')
+			print(domain + ' is not responding')
+		except MissingSchema as m:
+			print(domain + ' is not a valid URL')
+		except ReadTimeout as t:
+			print('Request to ' + domain + ' timed out')
 
 	else:
 		print('Please enter a fuzzer mode followed by a domain')
@@ -131,17 +131,17 @@ def guessPages():
 						links.append(urlGuess)
 				except ConnectionError as e:    
 					pass
-		   		except MissingSchema as m:
-		   			pass
-		   		except ReadTimeout as t:
-		   			pass
-	   	else:
+				except MissingSchema as m:
+					pass
+				except ReadTimeout as t:
+					pass
+		else:
 
-	   		for ext in pageExtensions:
+			for ext in pageExtensions:
 
-		   		urlGuess = domain + '/' + word + ext
-		   		
-		   		try:
+				urlGuess = domain + '/' + word + ext
+				
+				try:
 					
 					r = requests.get(urlGuess, timeout=3)
 
@@ -149,9 +149,8 @@ def guessPages():
 						links.append(urlGuess)
 				except ConnectionError as e:    
 					pass
-		   		except MissingSchema as m:
-		   			pass
-		   		except ReadTimeout as t:
-		   			pass
-
+				except MissingSchema as m:
+					pass
+				except ReadTimeout as t:
+					pass
 main()

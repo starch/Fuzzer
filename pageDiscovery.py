@@ -1,7 +1,6 @@
 from html.parser import HTMLParser
 import requests
 
-
 possibleWebsites = []
 vistedWebsites = []
 class HParser(HTMLParser):
@@ -36,9 +35,9 @@ def testAddress(newaddress):
 			pass
 	return -1;
 
-def discoverWebpages(domain, url):
+def discoverWebpages(domain, url, ses):
 	global possibleWebsites
-	r = requests.get(url)
+	r = ses.get(url)
 	parser = HParser()
 	html = r.text
 	parser.feed(html)
@@ -51,15 +50,14 @@ def discoverWebpages(domain, url):
 	possibleWebsites = []
 	return validWebsites
 
-def allValidWebPages(domain, url):
-	valid = discoverWebpages(domain, url)
+def allValidWebPages(domain, url, ses):
+	valid = discoverWebpages(domain, url, ses)
 	result = valid
 	while (len(valid) > 0):
-		elements = discoverWebpages(domain,valid[0])
+		elements = discoverWebpages(domain,valid[0], ses)
 		valid += elements
 		valid = valid [1:]
 		result += elements
 	return result
 
 
-print(allValidWebPages("http://www.greenberg.com","http://www.greenberg.com"))
