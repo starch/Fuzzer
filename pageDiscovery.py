@@ -5,6 +5,7 @@ possibleWebsites = []
 vistedWebsites = []
 class HParser(HTMLParser):
 	def handle_starttag(self, tag, attrs):
+		global vistedWebsites
 		if tag == 'a' and len(attrs) > 0 and attrs[0] not in vistedWebsites:
 			attrs = attrs[0]
 			for element in attrs:
@@ -25,11 +26,11 @@ def generateAddress(domain, currentAddress, possibleAddress):
 		while(i < len(currentAddress)):
 			if currentAddress[i] == "/":
 				index = i
-				i = i + 1
+			i = i + 1
 		return currentAddress[0:index] + possibleAddress[1]
 def testAddress(newaddress):
 	try:
-		r = requests.get(newaddress, timeout=10)
+		r = requests.get(newaddress, timeout=3)
 		return r.status_code
 	except:    
 			pass
@@ -50,14 +51,16 @@ def discoverWebpages(domain, url, ses):
 	possibleWebsites = []
 	return validWebsites
 
-def allValidWebPages(domain, url, ses):
+def allValidWebPages(domain, url, ses):	
 	valid = discoverWebpages(domain, url, ses)
 	result = valid
-	while (len(valid) > 0):
+	count = 0
+	while (len(valid) > 0 and count < 5):
 		elements = discoverWebpages(domain,valid[0], ses)
 		valid += elements
 		valid = valid [1:]
 		result += elements
+		count += 1
 	return result
 
 

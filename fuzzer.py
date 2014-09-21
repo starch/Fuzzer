@@ -23,6 +23,7 @@ def main():
 	print('Fuzzer has started!')
 	global domain
 	global fuzzerSession
+	global mode
 
 	if sys.argv.__len__() > 2 and sys.argv.__len__() <= 5:
 		if sys.argv[1].lower() == 'discover':
@@ -38,12 +39,12 @@ def main():
 			if r.status_code == 200:
 				print(domain + ' is a valid URL')
 				print('')
-				s = requests.Session()
 				fuzzerSession.get(domain)
 
 			if mode == 'discover':
 				#Call discover function here
-				discoverHelper()
+				discovxerHelper()
+				print(pageDiscovery.allValidWebPages(domain, domain, fuzzerSession))
 			elif mode == 'test':
 				#Call test function here
 				pass
