@@ -43,7 +43,7 @@ def main():
 
 			if mode == 'discover':
 				#Call discover function here
-				discovxerHelper()
+				discoverHelper()
 				print(pageDiscovery.allValidWebPages(domain, domain, fuzzerSession))
 			elif mode == 'test':
 				#Call test function here
