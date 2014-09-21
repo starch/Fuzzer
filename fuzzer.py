@@ -2,6 +2,10 @@ import sys
 import urllib2
 import requests
 from requests.exceptions import ConnectionError, MissingSchema
+from urllib.parse import urlparse
+
+queryStrings = []
+page
 
 def main():
 	print('Fuzzer has started!')
@@ -88,6 +92,8 @@ def discoverHelper():
 			authString = authString.split(',')
 			authUser = authString[0]
 			authPass = authString[1]
+			login = requests.get(domain, auth=(authUser, authPass))
+
 
 def cookieFinder(url):
 	req = requests.get(url)
@@ -97,5 +103,13 @@ def cookieFinder(url):
 	else:
 		for c in cookies:
 			print(c + '\n')
+
+def parseUrlForInput(url):
+	result = urlparse(url)
+	#should be in the form: query=something
+	queryString = result.query
+	qStr = queryString.partition('=')
+	#should return the "query" component
+	queryStrings.append(qStr[0])
 
 main()
