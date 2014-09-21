@@ -5,7 +5,7 @@ from urlparse import urlparse
 from requests.exceptions import ConnectionError, MissingSchema, ReadTimeout
 
 #DATA STRUCTURES
-fuzzerSession = ''
+fuzzerSession = requests.Session()
 queryStrings = []
 links = []
 
@@ -37,6 +37,7 @@ def main():
 
 			if r.status_code == 200:
 				print(domain + ' is a valid URL')
+				print('')
 				s = requests.Session()
 				fuzzerSession = s.get(domain)
 
@@ -47,11 +48,11 @@ def main():
 				#Call test function here
 				pass
 		except ConnectionError as e:    
-   			print(domain + ' is not responding')
-   		except MissingSchema as m:
-   			print(domain + ' is not a valid URL')
-   		except ReadTimeout as t:
-   			print('Request to ' + domain + ' timed out')
+			print(domain + ' is not responding')
+		except MissingSchema as m:
+			print(domain + ' is not a valid URL')
+		except ReadTimeout as t:
+			print('Request to ' + domain + ' timed out')
 
 	else:
 		print('Please enter a fuzzer mode followed by a domain')
@@ -76,9 +77,8 @@ def discoverHelper():
 			authString = authString.split(',')
 			authUser = authString[0]
 			authPass = authString[1]
-			s = requests.Session()
-			s.auth = (authUser, authPass)
-			fuzzerSession = s.get(domain)
+			fuzzerSession.auth = (authUser, authPass)
+			fuzzerSession.get(domain)
 
 	guessPages()
 
@@ -88,6 +88,9 @@ def discoverHelper():
 		parseUrlForInput(link)
 
 	for query in queryStrings:
+		print('Printing Input ID\'s...')
+		print('Input ID')
+		print('=========')
 		print(query)
 
 
@@ -96,8 +99,12 @@ def cookieFinder(sess):
 	if cookies.__len__() < 1:
 		print('No cookies')
 	else:
+		print('Printing cookies...')
+		print('Cookie Name \t Cookie Value')
+		print('=============================')
 		for c in cookies:
-			print(c)
+			print(c.name + '\t\t\t\t' + c.value)
+	print('')
 
 def parseUrlForInput(url):
 	result = urlparse(url)
@@ -131,17 +138,17 @@ def guessPages():
 						links.append(urlGuess)
 				except ConnectionError as e:    
 					pass
-		   		except MissingSchema as m:
-		   			pass
-		   		except ReadTimeout as t:
-		   			pass
-	   	else:
+				except MissingSchema as m:
+					pass
+				except ReadTimeout as t:
+					pass
+		else:
 
-	   		for ext in pageExtensions:
+			for ext in pageExtensions:
 
-		   		urlGuess = domain + '/' + word + ext
-		   		
-		   		try:
+				urlGuess = domain + '/' + word + ext
+				
+				try:
 					
 					r = requests.get(urlGuess, timeout=3)
 
@@ -149,9 +156,9 @@ def guessPages():
 						links.append(urlGuess)
 				except ConnectionError as e:    
 					pass
-		   		except MissingSchema as m:
-		   			pass
-		   		except ReadTimeout as t:
-		   			pass
+				except MissingSchema as m:
+					pass
+				except ReadTimeout as t:
+					pass
 
 main()
