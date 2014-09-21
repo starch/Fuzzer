@@ -5,7 +5,7 @@ from requests.exceptions import ConnectionError, MissingSchema
 from urllib.parse import urlparse
 
 queryStrings = []
-page
+pageExtensions = ['.html', '.aspx', '.jsp', '.php', '.asp']
 
 def main():
 	print('Fuzzer has started!')
@@ -59,33 +59,37 @@ def discoverHelper():
 			for word in commonWords:
 				if domain[-1] == '/':
 
-					urlGuess = domain + word
+					for ext in pageExtensions:
 
-					try:
-						r = requests.get(urlGuess, timeout=3)
+						urlGuess = domain + word + ext
 
-						if r.status_code == 200:
-							#Add to link array
+						try:
+							r = requests.get(urlGuess, timeout=3)
+
+							if r.status_code == 200:
+								#Add to link array
+								pass
+						except ConnectionError as e:    
 							pass
-					except ConnectionError as e:    
-						pass
-			   		except MissingSchema as m:
-			   			pass
+				   		except MissingSchema as m:
+				   			pass
 			   	else:
 
-			   		urlGuess = domain + '/' + word
-			   		
-			   		try:
-						
-						r = requests.get(urlGuess, timeout=3)
+			   		for ext in pageExtensions:
 
-						if r.status_code == 200:
-							#Add to link array
+				   		urlGuess = domain + '/' + word + ext
+				   		
+				   		try:
+							
+							r = requests.get(urlGuess, timeout=3)
+
+							if r.status_code == 200:
+								#Add to link array
+								pass
+						except ConnectionError as e:    
 							pass
-					except ConnectionError as e:    
-						pass
-			   		except MissingSchema as m:
-			   			pass
+				   		except MissingSchema as m:
+				   			pass
 
 		if '--custom-auth=' in sys.argv[x]:
 			authString = sys.argv[x][14:]
