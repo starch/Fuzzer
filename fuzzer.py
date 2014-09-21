@@ -87,11 +87,14 @@ def discoverHelper():
 	for link in links:
 		parseUrlForInput(link)
 
-	for query in queryStrings:
+	if queryStrings.__len__() < 1:
+		print('No query string inputs')
+	else:
 		print('Printing Input ID\'s...')
 		print('Input ID')
-		print('=========')
-		print(query)
+		print('=======')
+		for query in queryStrings:
+			print(query)
 
 
 def cookieFinder(sess):
@@ -116,9 +119,6 @@ def parseUrlForInput(url):
 			qStr = q.partition('=')
 			#should return the "query" component
 			queryStrings.append(qStr[0])
-		
-	else:
-		print("No query inputs")
 
 def guessPages():
 	global links
