@@ -4,17 +4,20 @@ import requests
 from requests.exceptions import ConnectionError, MissingSchema
 from urllib.parse import urlparse
 
+#DATA STRUCTURES
 queryStrings = []
+
+#GLOBAL SETTINGS
+mode = ''
+domain = ''
+vectors = []
+sensitive = []
+random = 0
+slow = 500
 pageExtensions = ['.html', '.aspx', '.jsp', '.php', '.asp']
 
 def main():
 	print('Fuzzer has started!')
-	mode = ''
-	domain = ''
-	vectors = []
-	sensitive = []
-	random = 0
-	slow = 500
 
 	if sys.argv.__len__() > 2 and sys.argv.__len__() <= 5:
 		if sys.argv[1].lower() == 'discover':
