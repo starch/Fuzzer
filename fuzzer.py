@@ -62,7 +62,7 @@ def discoverHelper():
 	global domain
 	global fuzzerSession
 	global commonWords
-	global url
+	global urls
 	customAuthflag = False
 	for x in range(3, sys.argv.__len__()):
 		if '--common-words=' in sys.argv[x]:
@@ -80,7 +80,7 @@ def discoverHelper():
 				payload = {"username":"admin", "password":"password","Login":"Login"}
 				fuzzerSession.post("http://127.0.0.1/dvwa/login.php", data=payload)
 				temp = (fuzzerSession.get("http://127.0.0.1/dvwa/index.php"))
-				url = pageDiscovery.allValidWebPages("http://127.0.0.1/dvwa/", "http://127.0.0.1/dvwa/index.php", fuzzerSession)
+				urls = pageDiscovery.allValidWebPages("http://127.0.0.1/dvwa/", "http://127.0.0.1/dvwa/index.php", fuzzerSession)
 
 	guessPages()
 
@@ -98,8 +98,7 @@ def discoverHelper():
 		for query in queryStrings:
 			print(query)
 	if not customAuthflag:
-		url = pageDiscovery.allValidWebPages(domain, domain, fuzzerSession)
-	print(url)
+		urls = pageDiscovery.allValidWebPages(domain, domain, fuzzerSession)
 
 def cookieFinder(sess):
 	cookies = sess.cookies
