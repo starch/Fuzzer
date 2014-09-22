@@ -86,13 +86,32 @@ def discoverHelper():
 
 	cookieFinder(fuzzerSession)
 
+	if urls.__len__() < 1:
+		print('No URL\'s found')
+	else:
+		print('URL')
+		print('===')
+		for url in urls:
+			print(url)
+	print('')
+
+	inputs = pageDiscovery.getInputs()
+
+	if inputs.__len__() < 1:
+		print('No inputs found')
+	else:
+		print('Input ID')
+		print('=======')
+		for i in inputs:
+			print(i)
+	print('')
+
 	for link in links:
 		parseUrlForInput(link)
 
 	if queryStrings.__len__() < 1:
 		print('No query string inputs')
 	else:
-		print('Printing Input ID\'s...')
 		print('Input ID')
 		print('=======')
 		for query in queryStrings:
@@ -105,7 +124,6 @@ def cookieFinder(sess):
 	if cookies.__len__() < 1:
 		print('No cookies')
 	else:
-		print('Printing cookies...')
 		print('Cookie Name \t Cookie Value')
 		print('=============================')
 		for c in cookies:

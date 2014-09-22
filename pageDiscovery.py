@@ -15,7 +15,7 @@ class HParser(HTMLParser):
 					possibleWebsites.append(attrs)
 					vistedWebsites.append(attrs)
 					break
-		else if tag == 'input' and len(attrs) > 0:
+		elif tag == 'input' and len(attrs) > 0:
 			for name, value in attrs:
 				if name == 'id':
 					inputList.append(value)
