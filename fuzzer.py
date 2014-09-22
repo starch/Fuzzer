@@ -14,6 +14,7 @@ mode = ''
 domain = ''
 vectors = []
 sensitive = []
+urls = []
 random = 0
 slow = 500
 pageExtensions = ['.html', '.aspx', '.jsp', '.jspx', '.php', '.asp', '.htm', '.do', '.rb', '.rhtml']
@@ -34,17 +35,16 @@ def main():
 		domain = sys.argv[2].lower()
 
 		try:
-			r = requests.get(domain, timeout=10)
+			r = fuzzerSession.get(domain, timeout=10)
 
 			if r.status_code == 200:
 				print(domain + ' is a valid URL')
 				print('')
-				r = fuzzerSession.get(domain)
-
+				fuzzerSession.get(domain)
 			if mode == 'discover':
 				#Call discover function here
 				discoverHelper()
-				print(pageDiscovery.allValidWebPages(domain, domain, fuzzerSession))
+
 			elif mode == 'test':
 				#Call test function here
 				pass
@@ -62,7 +62,8 @@ def discoverHelper():
 	global domain
 	global fuzzerSession
 	global commonWords
-
+	global urls
+	customAuthflag = False
 	for x in range(3, sys.argv.__len__()):
 		if '--common-words=' in sys.argv[x]:
 			filePath = sys.argv[x][15:]
@@ -72,17 +73,14 @@ def discoverHelper():
 			for line in wordFile:
 				commonWords.append(line)
 			wordFile.close()
-
 		if '--custom-auth=' in sys.argv[x]:
+			customAuthflag = True
 			authString = sys.argv[x][14:]
-			authString = authString.split(',')
-			authUser = authString[0]
-			authPass = authString[1]
-			print('User: ' + authUser)
-			print('Pass: ' + authPass)
-			fuzzerSession.auth = (authUser, authPass)
-			print(fuzzerSession.auth)
-			r = fuzzerSession.get(domain)
+			if(authString.lower() == "dvwa"):
+				payload = {"username":"admin", "password":"password","Login":"Login"}
+				fuzzerSession.post("http://127.0.0.1/dvwa/login.php", data=payload)
+				temp = (fuzzerSession.get("http://127.0.0.1/dvwa/index.php"))
+				urls = pageDiscovery.allValidWebPages("http://127.0.0.1/dvwa/", "http://127.0.0.1/dvwa/index.php", fuzzerSession)
 
 	guessPages()
 
@@ -118,7 +116,8 @@ def discoverHelper():
 		print('=======')
 		for query in queryStrings:
 			print(query)
-	print('')
+	if not customAuthflag:
+		urls = pageDiscovery.allValidWebPages(domain, domain, fuzzerSession)
 
 def cookieFinder(sess):
 	cookies = sess.cookies
