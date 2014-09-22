@@ -3,15 +3,22 @@ import requests
 
 possibleWebsites = []
 vistedWebsites = []
+inputList = []
 class HParser(HTMLParser):
 	def handle_starttag(self, tag, attrs):
 		global vistedWebsites
+		global inputList
 		if tag == 'a' and len(attrs) > 0 and attrs[0] not in vistedWebsites:
 			attrs = attrs[0]
 			for element in attrs:
 				if element != None and element.lower() == 'href':
 					possibleWebsites.append(attrs)
 					vistedWebsites.append(attrs)
+					break
+		else if tag == 'input' and len(attrs) > 0:
+			for name, value in attrs:
+				if name == 'id':
+					inputList.append(value)
 					break
 
 def generateAddress(domain, currentAddress, possibleAddress):
@@ -63,3 +70,7 @@ def allValidWebPages(domain, url, ses):
 		valid = valid [1:]
 		result += elements
 	return result
+
+def getinput():
+	global inputList
+	return inputList
