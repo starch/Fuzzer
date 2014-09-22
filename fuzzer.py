@@ -95,7 +95,7 @@ def discoverHelper():
 			print(url)
 	print('')
 
-	inputs = pageDiscovery.getInputs()
+	inputs = pageDiscovery.getInput()
 
 	if inputs.__len__() < 1:
 		print('No inputs found')

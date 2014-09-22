@@ -17,7 +17,7 @@ class HParser(HTMLParser):
 					break
 		elif tag == 'input' and len(attrs) > 0:
 			for name, value in attrs:
-				if name == 'id':
+				if name == 'name':
 					inputList.append(value)
 					break
 
@@ -34,7 +34,6 @@ def generateAddress(domain, currentAddress, possibleAddress):
 			if currentAddress[i] == "/":
 				index = i
 			i = i + 1
-		print(currentAddress[0:index] + "/" + possibleAddress[1])
 		return currentAddress[0:index] + "/" + possibleAddress[1]
 def testAddress(newaddress):
 	try:
@@ -52,7 +51,6 @@ def discoverWebpages(domain, url, ses):
 	parser.feed(html)
 	validWebsites = []
 	for websites in possibleWebsites:
-		print(websites)
 		if ("logout" in websites[1].lower() or "log-out" in websites[1].lower() or "log_out" in websites[1].lower()) != True:
 			address = generateAddress(domain, url, websites)
 			code = testAddress(address)
