@@ -27,7 +27,8 @@ def generateAddress(domain, currentAddress, possibleAddress):
 			if currentAddress[i] == "/":
 				index = i
 			i = i + 1
-		return currentAddress[0:index] + possibleAddress[1]
+		print(currentAddress[0:index] + "/" + possibleAddress[1])
+		return currentAddress[0:index] + "/" + possibleAddress[1]
 def testAddress(newaddress):
 	try:
 		r = requests.get(newaddress, timeout=3)
@@ -44,14 +45,16 @@ def discoverWebpages(domain, url, ses):
 	parser.feed(html)
 	validWebsites = []
 	for websites in possibleWebsites:
-		address = generateAddress(domain, url, websites)
-		code = testAddress(address)
-		if code == 200:
-			validWebsites.append(address)
+		print(websites)
+		if ("logout" in websites[1].lower() or "log-out" in websites[1].lower() or "log_out" in websites[1].lower()) != True:
+			address = generateAddress(domain, url, websites)
+			code = testAddress(address)
+			if code == 200:
+				validWebsites.append(address)
 	possibleWebsites = []
 	return validWebsites
 
-def allValidWebPages(domain, url, ses):	
+def allValidWebPages(domain, url, ses):
 	valid = discoverWebpages(domain, url, ses)
 	result = valid
 	while (len(valid) > 0):
