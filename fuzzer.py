@@ -39,7 +39,7 @@ def main():
 			if r.status_code == 200:
 				print(domain + ' is a valid URL')
 				print('')
-				fuzzerSession.get(domain)
+				r = fuzzerSession.get(domain)
 
 			if mode == 'discover':
 				#Call discover function here
@@ -78,12 +78,35 @@ def discoverHelper():
 			authString = authString.split(',')
 			authUser = authString[0]
 			authPass = authString[1]
+			print('User: ' + authUser)
+			print('Pass: ' + authPass)
 			fuzzerSession.auth = (authUser, authPass)
-			fuzzerSession.get(domain)
+			print(fuzzerSession.auth)
+			r = fuzzerSession.get(domain)
 
 	guessPages()
 
 	cookieFinder(fuzzerSession)
+
+	if urls.__len__() < 1:
+		print('No URL\'s found')
+	else:
+		print('URL')
+		print('===')
+		for url in urls:
+			print(url)
+	print('')
+
+	inputs = pageDiscovery.getInputs()
+
+	if inputs.__len__() < 1:
+		print('No inputs found')
+	else:
+		print('Input ID')
+		print('=======')
+		for i in inputs:
+			print(i)
+	print('')
 
 	for link in links:
 		parseUrlForInput(link)
@@ -91,19 +114,17 @@ def discoverHelper():
 	if queryStrings.__len__() < 1:
 		print('No query string inputs')
 	else:
-		print('Printing Input ID\'s...')
 		print('Input ID')
 		print('=======')
 		for query in queryStrings:
 			print(query)
-
+	print('')
 
 def cookieFinder(sess):
 	cookies = sess.cookies
 	if cookies.__len__() < 1:
 		print('No cookies')
 	else:
-		print('Printing cookies...')
 		print('Cookie Name \t Cookie Value')
 		print('=============================')
 		for c in cookies:
