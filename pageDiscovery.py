@@ -71,6 +71,6 @@ def allValidWebPages(domain, url, ses):
 		result += elements
 	return result
 
-def getinput():
+def getInput():
 	global inputList
 	return inputList
