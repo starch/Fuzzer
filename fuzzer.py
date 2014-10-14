@@ -63,6 +63,7 @@ def discoverHelper():
 	global fuzzerSession
 	global commonWords
 	global urls
+	global links
 	customAuthflag = False
 	for x in range(3, sys.argv.__len__()):
 		if '--common-words=' in sys.argv[x]:
@@ -81,7 +82,13 @@ def discoverHelper():
 				fuzzerSession.post("http://127.0.0.1/dvwa/login.php", data=payload)
 				temp = (fuzzerSession.get("http://127.0.0.1/dvwa/index.php"))
 				urls = pageDiscovery.allValidWebPages("http://127.0.0.1/dvwa/", "http://127.0.0.1/dvwa/index.php", fuzzerSession)
-
+				links += urls
+			if(authString.lower() == "bodgeit"):
+				payload = {"username":"admin@admin.com", "password":"password","Login":"Login"}
+				fuzzerSession.post("http://127.0.0.1:8080/bodgeit/login.jsp", data=payload)
+				temp = (fuzzerSession.get("http://127.0.0.1:8080/bodgeit/login.jsp"))
+				urls = pageDiscovery.allValidWebPages("http://127.0.0.1:8080/", "http://127.0.0.1:8080/bodgeit/home.jsp", fuzzerSession)
+				links += urls
 	guessPages()
 
 	cookieFinder(fuzzerSession)
