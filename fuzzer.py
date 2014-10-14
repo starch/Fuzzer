@@ -8,6 +8,9 @@ from requests.exceptions import ConnectionError, MissingSchema, ReadTimeout
 fuzzerSession = requests.Session()
 queryStrings = []
 links = []
+slowLinks = []
+responseCodeLinks = []
+SensitiveDataLinks = []
 
 #GLOBAL SETTINGS
 mode = ''
@@ -19,6 +22,7 @@ random = 0
 slow = 500
 pageExtensions = ['.html', '.aspx', '.jsp', '.jspx', '.php', '.asp', '.htm', '.do', '.rb', '.rhtml']
 commonWords = []
+sensitiveWords = []
 
 def main():
 	print('Fuzzer has started!')
@@ -47,7 +51,8 @@ def main():
 
 			elif mode == 'test':
 				#Call test function here
-				pass
+				discoverHelper()
+
 		except ConnectionError as e:    
 			print(domain + ' is not responding')
 		except MissingSchema as m:
@@ -62,6 +67,7 @@ def discoverHelper():
 	global domain
 	global fuzzerSession
 	global commonWords
+	global sensitiveWords
 	global urls
 	customAuthflag = False
 	for x in range(3, sys.argv.__len__()):
@@ -72,6 +78,14 @@ def discoverHelper():
 
 			for line in wordFile:
 				commonWords.append(line)
+			wordFile.close()
+		if '--sensitive-words=' in sys.argv[x]:
+			filePath = sys.argv[x][18:]
+			wordFile = open(filePath)
+			
+
+			for line in wordFile:
+				sensitiveWords.append(line)
 			wordFile.close()
 		if '--custom-auth=' in sys.argv[x]:
 			customAuthflag = True
@@ -181,4 +195,37 @@ def guessPages():
 					pass
 				except ReadTimeout as t:
 					pass
+
+def responseChecker(testUrl):
+	global slowLinks
+	global responseCodeLinks
+	global slow
+
+	seconds = slow / 1000
+
+	try:
+		r = requests.get(testUrl, timeout=seconds)
+
+		if r.status_code != 200:
+				responseCodeLinks.append(testUrl)
+	except ConnectionError as e:    
+		pass
+	except MissingSchema as m:
+		pass
+	except ReadTimeout as t:
+		slowLinks.append(testUrl)
+
+def sensitiveDataChecker(testUrl):
+	global sensitiveWords
+	global fuzzerSession
+	global SensitiveDataLinks
+
+	r = fuzzerSession.get(testUrl)
+	html = r.text
+
+	for word in sensitiveWords:
+		if word in html:
+			SensitiveDataLinks.append(testUrl)
+
+
 main()
