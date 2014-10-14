@@ -81,12 +81,14 @@ def discoverHelper():
 				payload = {"username":"admin", "password":"password","Login":"Login"}
 				fuzzerSession.post("http://127.0.0.1/dvwa/login.php", data=payload)
 				temp = (fuzzerSession.get("http://127.0.0.1/dvwa/index.php"))
+				print("before")
 				urls = pageDiscovery.allValidWebPages("http://127.0.0.1/dvwa/", "http://127.0.0.1/dvwa/index.php", fuzzerSession)
 				links += urls
 			if(authString.lower() == "bodgeit"):
-				payload = {"username":"admin@admin.com", "password":"password","Login":"Login"}
-				fuzzerSession.post("http://127.0.0.1:8080/bodgeit/login.jsp", data=payload)
-				temp = (fuzzerSession.get("http://127.0.0.1:8080/bodgeit/login.jsp"))
+				reg = {"username":"admin@admin.com", "password":"password1","password":"password2","Login":"Login"}
+				fuzzerSession.post("http://127.0.0.1:8080/bodgeit/register.jsp", data=reg)
+				login = {"username":"admin@admin.com", "password":"password","Login":"Login"}
+				fuzzerSession.post("http://127.0.0.1:8080/bodgeit/login.jsp", login)
 				urls = pageDiscovery.allValidWebPages("http://127.0.0.1:8080/", "http://127.0.0.1:8080/bodgeit/home.jsp", fuzzerSession)
 				links += urls
 	guessPages()
