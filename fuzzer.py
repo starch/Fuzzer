@@ -11,6 +11,7 @@ links = []
 slowLinks = []
 responseCodeLinks = []
 SensitiveDataLinks = []
+unsanitized = []
 
 #GLOBAL SETTINGS
 mode = ''
@@ -226,6 +227,29 @@ def sensitiveDataChecker(testUrl):
 	for word in sensitiveWords:
 		if word in html:
 			SensitiveDataLinks.append(testUrl)
+# Need to pass a url to this instead of the inputs then lookup the inputs
+# via the url -> inputs dictionary
+def checkSanatization(inputs):
+	global unsanitized
+	for i in inputs:
+		if "<" in i:
+			unsanitized.append(i)
+		elif ">" in i:
+			unsanitized.append(i)
+		elif "'" in i:
+			unsanitized.append(i)
+		elif "&" in i:
+			unsanitized.append(i)
+		elif '"' in i:
+			unsanitized.append(i)
+		elif "*" in i:
+			unsanitized.append(i)
+		elif "/" in i:
+			unsanitized.append(i)
+		elif ":" in i:
+			unsanitized.append(i)
+		elif ";" in i:
+			unsanitized.append(i)
 
 
 main()
