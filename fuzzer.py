@@ -197,11 +197,11 @@ def testHelper():
 		while(True):
 			randomUrlInt = random.randrange(0, urls.__len__()+1)
 			randomUrl = urls[randomUrlInt]
-			if pageDiscovery.getinputDict(randomUrl) != -1:
+			if pageDiscovery.getInputDict(randomUrl) != -1:
 				break
 
-		randomInputInt = random.randrange(0, len(pageDiscovery.getinputDict(randomUrl))+1)
-		randomInput = pageDiscovery.getinputDict(randomUrl)[randomInputInt]
+		randomInputInt = random.randrange(0, len(pageDiscovery.getInputDict(randomUrl))+1)
+		randomInput = pageDiscovery.getInputDict(randomUrl)[randomInputInt]
 
 		for vectorData in vector:
 			payload = {randomInput: vectorData}
@@ -371,10 +371,7 @@ def printTest():
 	global responseCodeLinks
 	global sensitiveDataLinks
 	global unsanitizedLinks
-	print((slowLinks))
-	print(set(responseCodeLinks))
-	print((sensitiveDataLinks))
-	print(unsanitizedLinks)
+	print("\n")
 	for url in urls:
 		if(url in (slowLinks + responseCodeLinks + sensitiveDataLinks + unsanitizedLinks)):
 			print(url)
@@ -383,7 +380,7 @@ def printTest():
 			if url in responseCodeLinks:
 				print("The response code was not 200 when fuzzed")
 			if url in sensitiveDataLinks:
-				print("Senesitive data may have been linked")
+				print("Senesitive data may have been leaked")
 			if url in unsanitizedLinks:
 				print("The input was not sanitized")
 			print("\n")
