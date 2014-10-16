@@ -14,7 +14,7 @@ commonWords = []
 slowLinks = []
 responseCodeLinks = []
 sensitiveDataLinks = []
-unsanitizedDict = []
+unsanitizedLinks = []
 
 
 #GLOBAL SETTINGS
@@ -312,30 +312,14 @@ def sensitiveDataChecker(testUrl, html):
 	for word in sensitiveWords:
 		if word in html:
 			sensitiveDataLinks.append(testUrl)
-def checkSanatization(url):
-	global unsanitizedDict
-	if len(pageDiscovery.getInputDict(url)) > 0:
-		unsanitizedDict[url] = []
-		inputs = inputDict.get(url)
-		for i in inputs:
-			if "<" in i:
-				unsanitizedDict[url].append(i)
-			elif ">" in i:
-				unsanitizedDict[url].append(i)
-			elif "'" in i:
-				unsanitizedDict[url].append(i)
-			elif "&" in i:
-				unsanitizedDict[url].append(i)
-			elif '"' in i:
-				unsanitizedDict[url].append(i)
-			elif "*" in i:
-				unsanitizedDict[url].append(i)
-			elif "/" in i:
-				unsanitizedDict[url].append(i)
-			elif ":" in i:
-				unsanitizedDict[url].append(i)
-			elif ";" in i:
-				unsanitizedDict[url].append(i)
+def checkSanatization(url, html, vector):
+	global unsanitizedLinks
+	before = ["<",">","&",'"']
+	after = ["&lt","&gt","&amp;","&quot;"]
+	if before in vector:
+		if vector in html:
+			unsanitizedLinks += url
+
 def replaceQueryStrings(url, data):
 	result = urlparse(url)
 	#should be in the form: query=something
@@ -353,50 +337,23 @@ def replaceQueryStrings(url, data):
 	else:
 		return ""
 
-def printSlowLinks():
-	global slowLinks
-	if slowLinks.__len__() < 1:
-		print('No slow links found')
-	else:
-		print('Links that are slower than recommended time')
-		print('=======')
-		for link in slowLinks:
-			print(link)
-	print('')
+def printTest():
+	global urls = []
+	global slowLinks = []
+	global responseCodeLinks = []
+	global sensitiveDataLinks = []
+	global unsanitizedLinks = []
 
-def printResponseCodeLinks():
-	global responseCodeLinks
-	if slowLinks.__len__() < 1:
-		print('No bad request links found')
-	else:
-		print('Links that result in a response code other than 200')
-		print('=======')
-		for link in responseCodeLinks:
-			print(link)
-	print('')
-
-def printSensitiveDataLinks():
-	global sensitiveDataLinks
-	if slowLinks.__len__() < 1:
-		print('No sensitive data links found')
-	else:
-		print('Links that have sensitive data')
-		print('=======')
-		for link in sensitiveDataLinks:
-			print(link)
-	print('')
-
-def printUnsanitizedInputs():
-	global unsanitizedDict
-	if bool(unsanitizedDict):
-		print('No unsanitized inputs found')
-	else:
-		for key, value in unsanitizedDict.items():
-			print('Possible Unsanitized Inputs for ' + key)
-			print('=======')
-			for i in value:
-				print(i)
-			print('')
-	print('')
+	if urls in (slowLinks + responseCodeLinks + sensitiveDataLinks + unsanitizedLinks):
+		print(urls)
+		if urls in slowLinks:
+			print("This url timed out when fuzzed")
+		if urls in responseCodeLinks:
+			print("The response code was not 200 when fuzzed")
+		if urls in sensitiveDataLinks:
+			print("Senesitive data may have been linked")
+		if urls in unsanitizedLinks:
+			print("The input was not sanitized")
+		print("\n")
 
 main()
