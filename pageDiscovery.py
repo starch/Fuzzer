@@ -92,7 +92,9 @@ def getInput():
 
 def getInputDict(url):
 	global inputDict
-	return inputDict[url]
+	if url in inputDict:
+		return inputDict[url]
+	return -1
 
 def getSubmitDict():
 	global submitDict

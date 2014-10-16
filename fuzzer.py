@@ -32,7 +32,7 @@ def main():
 	global fuzzerSession
 	global mode
 
-	if sys.argv.__len__() > 2 and sys.argv.__len__() <= 5:
+	if sys.argv.__len__() > 2 and sys.argv.__len__() <= 8:
 		if sys.argv[1].lower() == 'discover':
 			mode = 'discover'
 		elif sys.argv[1].lower() == 'test':
@@ -53,7 +53,8 @@ def main():
 
 			elif mode == 'test':
 				#Call test function here
-				discoverHelper()
+				discoverHelper(False)
+				testHelper()
 
 		except ConnectionError as e:    
 			print(domain + ' is not responding')
@@ -65,7 +66,7 @@ def main():
 	else:
 		print('Please enter a fuzzer mode followed by a domain')
 
-def discoverHelper():
+def discoverHelper(prints=True):
 	global domain
 	global fuzzerSession
 	global commonWords
@@ -94,7 +95,7 @@ def discoverHelper():
 		if '--vectors=' in sys.argv[x]:
 			filePath = sys.argv[x][10:]
 			vectorFile = open(filePath)
-		
+			print(filePath)
 
 			for line in vectorFile:
 				vector.append(line)
@@ -141,41 +142,41 @@ def discoverHelper():
 				i+=1
 		else:
 			i+=1
+	if(prints):
+		if urls.__len__() < 1:
+			print('No URL\'s found')
+		else:
+			print('URL')
+			print('===')
+			for url in urls:
+				print(url)
+		print('')
 
-	if urls.__len__() < 1:
-		print('No URL\'s found')
-	else:
-		print('URL')
-		print('===')
-		for url in urls:
-			print(url)
-	print('')
+		inputs = pageDiscovery.getInput()
 
-	inputs = pageDiscovery.getInput()
-
-	if inputs.__len__() < 1:
-		print('No inputs found')
-	else:
-		print('Input ID')
-		print('=======')
-		for i in inputs:
-			print(i)
-	print('')
-
-	for url in urls + queryUrl:
-		parseUrlForInput(url)
-
-	if queryDict.__len__() < 1:
-		print('No query string inputs')
-	else:
-		print('Query strings')
-		print('=======')
-		for key, value in queryDict.items():
-			print('Query strings for ' + key)
+		if inputs.__len__() < 1:
+			print('No inputs found')
+		else:
+			print('Input ID')
 			print('=======')
-			for i in value:
+			for i in inputs:
 				print(i)
-			print('')
+		print('')
+
+		for url in urls + queryUrl:
+			parseUrlForInput(url)
+
+		if queryDict.__len__() < 1:
+			print('No query string inputs')
+		else:
+			print('Query strings')
+			print('=======')
+			for key, value in queryDict.items():
+				print('Query strings for ' + key)
+				print('=======')
+				for i in value:
+					print(i)
+				print('')
 
 
 
@@ -188,12 +189,16 @@ def testHelper():
 	global slow
 	global queryDict
 
-	seconds = slow / 1000
+	seconds = int(slow) / 1000
 
 	if randomFuzz == 1:
 		#insert randomization here
-		randomUrlInt = random.randrange(0, urls.__len__()+1)
-		randomUrl = urls[randomUrlInt]
+
+		while(True):
+			randomUrlInt = random.randrange(0, urls.__len__()+1)
+			randomUrl = urls[randomUrlInt]
+			if pageDiscovery.getinputDict(randomUrl) != -1:
+				break
 
 		randomInputInt = random.randrange(0, len(pageDiscovery.getinputDict(randomUrl))+1)
 		randomInput = pageDiscovery.getinputDict(randomUrl)[randomInputInt]
@@ -203,12 +208,12 @@ def testHelper():
 			#send POST Ruquest here
 			try:
 				r = fuzzerSession.post(randomUrl, data=payload, timeout=seconds)
-					
 				if r.status_code != 200:
 					responseCodeLinks.append(randomUrl)
 				else:
 					html = r.text
 					sensitiveDataChecker(randomUrl, html)
+					checkSanatization(randomUrl, html, vectorData)
 			except ConnectionError as e:    
 				pass
 			except MissingSchema as m:
@@ -218,27 +223,46 @@ def testHelper():
 
 	elif randomFuzz == 0:
 		for url in urls:
-			for inputs in pageDiscovery.getInputDict(url):
-				for vectorData in vector:
-					payload = {inputs: vectorData}
-					#send POST Request here
-				try:
-					r = fuzzerSession.post(url, data=payload, timeout=seconds)
-					
-					if r.status_code != 200:
-						responseCodeLinks.append(url)
-					else:
-						html = r.text
-						sensitiveDataChecker(url, html)
-				except ConnectionError as e:    
-					pass
-				except MissingSchema as m:
-					pass
-				except ReadTimeout as t:
-					slowLinks.append(url)	
-			for query in queryDict[url]:
-				for vectorData in vector:
-					replaceQueryStrings(url, vectorData)
+			if pageDiscovery.getInputDict(url) != -1:
+				for inputs in pageDiscovery.getInputDict(url):
+					for vectorData in vector:
+						payload = {inputs: vectorData}
+						#send POST Request here
+						try:
+							r = fuzzerSession.post(url, data=payload, timeout=seconds)
+							if r.status_code != 200:
+								responseCodeLinks.append(url)
+							else:
+								html = r.text
+								sensitiveDataChecker(url, html)
+								checkSanatization(url, html, vectorData)
+						except ConnectionError as e:    
+							pass
+						except MissingSchema as m:
+							pass
+						except ReadTimeout as t:
+							slowLinks.append(url)
+				if url in queryDict:
+					for query in queryDict[url]:
+						for vectorData in vector:
+							newUrl = replaceQueryStrings(url, vectorData)
+							if newUrl != "":
+								try:
+									r = fuzzerSession.get(url, timeout=seconds)
+									
+									if r.status_code != 200:
+										responseCodeLinks.append(url)
+									else:
+										html = r.text
+										sensitiveDataChecker(url, html)
+										checkSanatization(url, html, vectorData)
+								except ConnectionError as e:    
+									pass
+								except MissingSchema as m:
+									pass
+								except ReadTimeout as t:
+									slowLinks.append(url)
+	printTest()
 
 
 def cookieFinder(sess):
@@ -315,13 +339,14 @@ def sensitiveDataChecker(testUrl, html):
 	for word in sensitiveWords:
 		if word in html:
 			sensitiveDataLinks.append(testUrl)
-def checkSanatization(url, html, vector):
+def checkSanatization(url, html, vectorData):
 	global unsanitizedLinks
 	before = ["<",">","&",'"']
 	after = ["&lt","&gt","&amp;","&quot;"]
-	if before in vector:
-		if vector in html:
-			unsanitizedLinks += url
+	for each in before:
+		if each in vectorData:
+			if vectorData in html:	
+				unsanitizedLinks.append(url)
 
 def replaceQueryStrings(url, data):
 	result = urlparse(url)
@@ -341,22 +366,26 @@ def replaceQueryStrings(url, data):
 		return ""
 
 def printTest():
-	global urls = []
-	global slowLinks = []
-	global responseCodeLinks = []
-	global sensitiveDataLinks = []
-	global unsanitizedLinks = []
-
-	if urls in (slowLinks + responseCodeLinks + sensitiveDataLinks + unsanitizedLinks):
-		print(urls)
-		if urls in slowLinks:
-			print("This url timed out when fuzzed")
-		if urls in responseCodeLinks:
-			print("The response code was not 200 when fuzzed")
-		if urls in sensitiveDataLinks:
-			print("Senesitive data may have been linked")
-		if urls in unsanitizedLinks:
-			print("The input was not sanitized")
-		print("\n")
+	global urls
+	global slowLinks
+	global responseCodeLinks
+	global sensitiveDataLinks
+	global unsanitizedLinks
+	print((slowLinks))
+	print(set(responseCodeLinks))
+	print((sensitiveDataLinks))
+	print(unsanitizedLinks)
+	for url in urls:
+		if(url in (slowLinks + responseCodeLinks + sensitiveDataLinks + unsanitizedLinks)):
+			print(url)
+			if url in slowLinks:
+				print("This url timed out when fuzzed")
+			if url in responseCodeLinks:
+				print("The response code was not 200 when fuzzed")
+			if url in sensitiveDataLinks:
+				print("Senesitive data may have been linked")
+			if url in unsanitizedLinks:
+				print("The input was not sanitized")
+			print("\n")
 
 main()
