@@ -1,5 +1,6 @@
 import sys
 import requests
+import random
 import pageDiscovery
 from urllib.parse import urlparse
 from requests.exceptions import ConnectionError, MissingSchema, ReadTimeout
@@ -7,18 +8,23 @@ from requests.exceptions import ConnectionError, MissingSchema, ReadTimeout
 #DATA STRUCTURES
 fuzzerSession = requests.Session()
 queryDict = {}
-vectors = []
 sensitive = []
 urls = []
 commonWords = []
+slowLinks = []
+responseCodeLinks = []
+sensitiveDataLinks = []
+unsanitizedDict = []
+
 
 #GLOBAL SETTINGS
 mode = ''
 domain = ''
-random = 0
+randomFuzz = 0
 slow = 500
 pageExtensions = ['.html', '.aspx', '.jsp', '.jspx', '.php', '.asp', '.htm', '.do', '.rb', '.rhtml']
-
+sensitiveWords = []
+vector = []
 
 def main():
 	print('Fuzzer has started!')
@@ -47,7 +53,8 @@ def main():
 
 			elif mode == 'test':
 				#Call test function here
-				pass
+				discoverHelper()
+
 		except ConnectionError as e:    
 			print(domain + ' is not responding')
 		except MissingSchema as m:
@@ -62,7 +69,10 @@ def discoverHelper():
 	global domain
 	global fuzzerSession
 	global commonWords
+	global sensitiveWords
 	global urls
+	global randomFuzz
+	global slow
 	customAuthflag = False
 	for x in range(3, sys.argv.__len__()):
 		if '--common-words=' in sys.argv[x]:
@@ -73,6 +83,34 @@ def discoverHelper():
 			for line in wordFile:
 				commonWords.append(line)
 			wordFile.close()
+		if '--sensitive-words=' in sys.argv[x]:
+			filePath = sys.argv[x][18:]
+			wordFile = open(filePath)
+			
+
+			for line in wordFile:
+				sensitiveWords.append(line)
+			wordFile.close()
+		if '--vectors=' in sys.argv[x]:
+			filePath = sys.argv[x][10:]
+			vectorFile = open(filePath)
+		
+
+			for line in vectorFile:
+				vector.append(line)
+			vectorFile.close()
+		if '--random=' in sys.argv[x]:
+			randomSetting = sys.argv[x][9:]
+
+			if randomSetting.lower() == 'true':
+				randomFuzz = 1
+			elif randomSetting.lower() == 'false':
+				randomFuzz = 0;
+		if '--slow=' in sys.argv[x]:
+			slowSetting = sys.argv[x][7:]
+
+			if slowSetting.isdigit():
+				slow = slowSetting
 		if '--custom-auth=' in sys.argv[x]:
 			customAuthflag = True
 			authString = sys.argv[x][14:]
@@ -141,6 +179,65 @@ def discoverHelper():
 
 
 
+def testHelper():
+	global randomFuzz
+	global vector
+	global fuzzerSession
+	global slowLinks
+	global responseCodeLinks
+	global slow
+
+	seconds = slow / 1000
+
+	if randomFuzz == 1:
+		#insert randomization here
+		randomUrlInt = random.randrange(0, urls.__len__()+1)
+		randomUrl = urls[randomUrlInt]
+
+		randomInputInt = random.randrange(0, len(pageDiscovery.getinputDict(randomUrl))+1)
+		randomInput = pageDiscovery.getinputDict(randomUrl)[randomInputInt]
+
+		for vectorData in vector:
+			payload = {randomInput: vectorData}
+			#send POST Ruquest here
+			try:
+				r = fuzzerSession.post(randomUrl, data=payload, timeout=seconds)
+					
+				if r.status_code != 200:
+					responseCodeLinks.append(randomUrl)
+				else:
+					html = r.text
+					sensitiveDataChecker(randomUrl, html)
+			except ConnectionError as e:    
+				pass
+			except MissingSchema as m:
+				pass
+			except ReadTimeout as t:
+				slowLinks.append(randomUrl)
+
+	elif randomFuzz == 0:
+		for url in urls:
+			for inputs in pageDiscovery.getInputDict(url):
+				for vectorData in vector:
+					payload = {inputs: vectorData}
+					#send POST Request here
+				try:
+					r = fuzzerSession.post(url, data=payload, timeout=seconds)
+					
+					if r.status_code != 200:
+						responseCodeLinks.append(url)
+					else:
+						html = r.text
+						sensitiveDataChecker(url, html)
+				except ConnectionError as e:    
+					pass
+				except MissingSchema as m:
+					pass
+				except ReadTimeout as t:
+					slowLinks.append(url)	
+
+
+
 def cookieFinder(sess):
 	cookies = sess.cookies
 	if cookies.__len__() < 1:
@@ -206,4 +303,100 @@ def guessPages():
 					pass
 				except ReadTimeout as t:
 					pass
+
+def sensitiveDataChecker(testUrl, html):
+	global sensitiveWords
+	global fuzzerSession
+	global SensitiveDataLinks
+
+	for word in sensitiveWords:
+		if word in html:
+			sensitiveDataLinks.append(testUrl)
+def checkSanatization(url):
+	global unsanitizedDict
+	if len(pageDiscovery.getInputDict(url)) > 0:
+		unsanitizedDict[url] = []
+		inputs = inputDict.get(url)
+		for i in inputs:
+			if "<" in i:
+				unsanitizedDict[url].append(i)
+			elif ">" in i:
+				unsanitizedDict[url].append(i)
+			elif "'" in i:
+				unsanitizedDict[url].append(i)
+			elif "&" in i:
+				unsanitizedDict[url].append(i)
+			elif '"' in i:
+				unsanitizedDict[url].append(i)
+			elif "*" in i:
+				unsanitizedDict[url].append(i)
+			elif "/" in i:
+				unsanitizedDict[url].append(i)
+			elif ":" in i:
+				unsanitizedDict[url].append(i)
+			elif ";" in i:
+				unsanitizedDict[url].append(i)
+def replaceQueryStrings(url, data):
+	result = urlparse(url)
+	#should be in the form: query=something
+	queryString = result.query
+	if queryString != '':
+		queryAry = queryString.split('&')
+		count = 0
+		for q in queryAry:
+			old = q
+			qStr = q.partition('=')
+			new = qStr[0] + "=" + data[count]
+			url.replace(old, new)
+			count += 1
+		return url
+	else:
+		return ""
+
+def printSlowLinks():
+	global slowLinks
+	if slowLinks.__len__() < 1:
+		print('No slow links found')
+	else:
+		print('Links that are slower than recommended time')
+		print('=======')
+		for link in slowLinks:
+			print(link)
+	print('')
+
+def printResponseCodeLinks():
+	global responseCodeLinks
+	if slowLinks.__len__() < 1:
+		print('No bad request links found')
+	else:
+		print('Links that result in a response code other than 200')
+		print('=======')
+		for link in responseCodeLinks:
+			print(link)
+	print('')
+
+def printSensitiveDataLinks():
+	global sensitiveDataLinks
+	if slowLinks.__len__() < 1:
+		print('No sensitive data links found')
+	else:
+		print('Links that have sensitive data')
+		print('=======')
+		for link in sensitiveDataLinks:
+			print(link)
+	print('')
+
+def printUnsanitizedInputs():
+	global unsanitizedDict
+	if bool(unsanitizedDict):
+		print('No unsanitized inputs found')
+	else:
+		for key, value in unsanitizedDict.items():
+			print('Possible Unsanitized Inputs for ' + key)
+			print('=======')
+			for i in value:
+				print(i)
+			print('')
+	print('')
+
 main()
