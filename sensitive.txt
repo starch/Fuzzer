@@ -1,2 +1,12 @@
 MySQL
+mysql
 SQL
+sql
+Apache
+Tomcat
+Glassfish
+Catalina
+Error
+Java
+java
+root
