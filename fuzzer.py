@@ -6,19 +6,19 @@ from requests.exceptions import ConnectionError, MissingSchema, ReadTimeout
 
 #DATA STRUCTURES
 fuzzerSession = requests.Session()
-queryStrings = []
-links = []
+queryDict = {}
+vectors = []
+sensitive = []
+urls = []
+commonWords = []
 
 #GLOBAL SETTINGS
 mode = ''
 domain = ''
-vectors = []
-sensitive = []
-urls = []
 random = 0
 slow = 500
 pageExtensions = ['.html', '.aspx', '.jsp', '.jspx', '.php', '.asp', '.htm', '.do', '.rb', '.rhtml']
-commonWords = []
+
 
 def main():
 	print('Fuzzer has started!')
@@ -63,7 +63,6 @@ def discoverHelper():
 	global fuzzerSession
 	global commonWords
 	global urls
-	global links
 	customAuthflag = False
 	for x in range(3, sys.argv.__len__()):
 		if '--common-words=' in sys.argv[x]:
@@ -79,21 +78,31 @@ def discoverHelper():
 			authString = sys.argv[x][14:]
 			if(authString.lower() == "dvwa"):
 				payload = {"username":"admin", "password":"password","Login":"Login"}
-				fuzzerSession.post("http://127.0.0.1/dvwa/login.php", data=payload)
-				temp = (fuzzerSession.get("http://127.0.0.1/dvwa/index.php"))
-				print("before")
+				fuzzerSession.post("http://127.0.0.1/dvwa/login.php", data=payload, timeout=3)
 				urls = pageDiscovery.allValidWebPages("http://127.0.0.1/dvwa/", "http://127.0.0.1/dvwa/index.php", fuzzerSession)
-				links += urls
 			if(authString.lower() == "bodgeit"):
 				reg = {"username":"admin@admin.com", "password":"password1","password":"password2","Login":"Login"}
 				fuzzerSession.post("http://127.0.0.1:8080/bodgeit/register.jsp", data=reg)
 				login = {"username":"admin@admin.com", "password":"password","Login":"Login"}
-				fuzzerSession.post("http://127.0.0.1:8080/bodgeit/login.jsp", login)
+				fuzzerSession.post("http://127.0.0.1:8080/bodgeit/login.jsp", data=login)
 				urls = pageDiscovery.allValidWebPages("http://127.0.0.1:8080/", "http://127.0.0.1:8080/bodgeit/home.jsp", fuzzerSession)
-				links += urls
+			if not customAuthflag:
+				urls = pageDiscovery.allValidWebPages(domain, domain, fuzzerSession)
 	guessPages()
-
 	cookieFinder(fuzzerSession)
+	queryUrl = []
+	i = 0
+	while(i < len(urls)):
+		if("?" in urls[i]):
+			queryUrl.append(urls[i])
+			substring = urls[i][0 : urls[i].index("?")]
+			if(substring in urls):
+				urls.remove(urls[i])
+			else:
+				urls[i] = substring
+				i+=1
+		else:
+			i+=1
 
 	if urls.__len__() < 1:
 		print('No URL\'s found')
@@ -115,18 +124,22 @@ def discoverHelper():
 			print(i)
 	print('')
 
-	for link in links:
-		parseUrlForInput(link)
+	for url in urls + queryUrl:
+		parseUrlForInput(url)
 
-	if queryStrings.__len__() < 1:
+	if queryDict.__len__() < 1:
 		print('No query string inputs')
 	else:
-		print('Input ID')
+		print('Query strings')
 		print('=======')
-		for query in queryStrings:
-			print(query)
-	if not customAuthflag:
-		urls = pageDiscovery.allValidWebPages(domain, domain, fuzzerSession)
+		for key, value in queryDict.items():
+			print('Query strings for ' + key)
+			print('=======')
+			for i in value:
+				print(i)
+			print('')
+
+
 
 def cookieFinder(sess):
 	cookies = sess.cookies
@@ -140,18 +153,21 @@ def cookieFinder(sess):
 	print('')
 
 def parseUrlForInput(url):
+	global queryDict
 	result = urlparse(url)
 	#should be in the form: query=something
 	queryString = result.query
+	key = url
 	if queryString != '':
+		if key not in queryDict:
+			queryDict[key] = []
 		queryAry = queryString.split('&')
 		for q in queryAry:
 			qStr = q.partition('=')
 			#should return the "query" component
-			queryStrings.append(qStr[0])
+			queryDict[key].append(qStr[0])
 
 def guessPages():
-	global links
 	global commonWords
 
 	for word in commonWords:
@@ -165,7 +181,7 @@ def guessPages():
 					r = requests.get(urlGuess, timeout=3)
 
 					if r.status_code == 200:
-						links.append(urlGuess)
+						urls.append(urlGuess)
 				except ConnectionError as e:    
 					pass
 				except MissingSchema as m:
@@ -183,7 +199,7 @@ def guessPages():
 					r = requests.get(urlGuess, timeout=3)
 
 					if r.status_code == 200:
-						links.append(urlGuess)
+						urls.append(urlGuess)
 				except ConnectionError as e:    
 					pass
 				except MissingSchema as m:

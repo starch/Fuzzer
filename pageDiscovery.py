@@ -4,10 +4,15 @@ import requests
 possibleWebsites = []
 vistedWebsites = []
 inputList = []
+currentUrl = "p";
+inputDict = {}
+submitDict = {}
 class HParser(HTMLParser):
 	def handle_starttag(self, tag, attrs):
 		global vistedWebsites
 		global inputList
+		global inputDict
+		global submitDict
 		if tag == 'a' and len(attrs) > 0 and attrs[0] not in vistedWebsites:
 			attrs = attrs[0]
 			for element in attrs:
@@ -17,15 +22,25 @@ class HParser(HTMLParser):
 					break
 		elif tag == 'input' and len(attrs) > 0:
 			for name, value in attrs:
+				#implement submitDict
 				if name == 'name':
 					inputList.append(value)
+					if(currentUrl in inputDict):
+						inputDict[currentUrl].append(value)
+					else:
+						inputDict[currentUrl] = [value]
 					break
+				elif name == "type" and value == "submit":
+					if currentUrl in submitDict:
+						submitDict[currentUrl].append(value)
+					else:
+						submitDict[currentUrl] = [value]
 
 def generateAddress(domain, currentAddress, possibleAddress):
 	if(possibleAddress[1][0] == "/"):
 		return domain + possibleAddress[1]
 	elif(possibleAddress[1][0:4].lower() == 'http'):
-		if domain in possibleAddress[1]:
+		if possibleAddress[1].startswith(domain):
 			return possibleAddress[1]
 	else:
 		index = 0;
@@ -45,9 +60,11 @@ def testAddress(newaddress):
 
 def discoverWebpages(domain, url, ses):
 	global possibleWebsites
+	global currentUrl
 	r = ses.get(url)
 	parser = HParser()
 	html = r.text
+	currentUrl = url
 	parser.feed(html)
 	validWebsites = []
 	for websites in possibleWebsites:
@@ -72,3 +89,15 @@ def allValidWebPages(domain, url, ses):
 def getInput():
 	global inputList
 	return inputList
+
+def getInputDict(url):
+	global inputDict
+	return inputDict[url]
+
+def getSubmitDict():
+	global submitDict
+	return submitDict
+
+def hasSubmitButton(url):
+	global submitDict
+	return url in submitDict
