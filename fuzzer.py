@@ -186,6 +186,7 @@ def testHelper():
 	global slowLinks
 	global responseCodeLinks
 	global slow
+	global queryDict
 
 	seconds = slow / 1000
 
@@ -235,7 +236,9 @@ def testHelper():
 					pass
 				except ReadTimeout as t:
 					slowLinks.append(url)	
-
+			for query in queryDict[url]:
+				for vectorData in vector:
+					replaceQueryStrings(url, vectorData)
 
 
 def cookieFinder(sess):
